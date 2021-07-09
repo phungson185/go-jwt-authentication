@@ -21,18 +21,12 @@ const SecretKey = "secret"
 
 func Register(c *gin.Context) {
 	var json map[string]string
-	var user models.User
-	var count int64
-
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
 	}
 
 	rand.Seed(time.Now().UnixNano())
 	randNum := rand.Intn(999999) + 100000
-	content := "Your authentication code is: " + strconv.Itoa(randNum)
-	services.SendMail(json["email"], "Verify Email", content)
 
 	password, err := bcrypt.GenerateFromPassword([]byte(json["password"]), bcrypt.DefaultCost)
 
@@ -40,27 +34,21 @@ func Register(c *gin.Context) {
 		panic(err)
 	}
 
-	if database.Db.Model(&user).Where("email = ?", json["email"]).Count(&count); count == 1 {
-		if err := database.Db.Model(&user).Where("email = ?", json["email"]).Updates(map[string]interface{}{"password": string(password), "phone": json["phone"], "user_address": json["userAddress"], "verify_code": strconv.Itoa(randNum)}); err.Error != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error})
-			return
-		}
-	} else {
-
-		user := models.User{
-			Email:       json["email"],
-			Password:    string(password),
-			Phone:       json["phone"],
-			UserAddress: json["userAddress"],
-			VerifyCode:  strconv.Itoa(randNum),
-		}
-
-		if err := database.Db.Create(&user); err.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "could not register"})
-			return
-		}
-
+	user := models.User{
+		Email:       json["email"],
+		Password:    string(password),
+		Phone:       json["phone"],
+		UserAddress: json["userAddress"],
+		VerifyCode:  strconv.Itoa(randNum),
 	}
+
+	if err := database.Db.Create(&user); err.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not registerc"})
+		return
+	}
+
+	content := "Your authentication code is: " + strconv.Itoa(randNum)
+	services.SendMail(json["email"], "Verify Email", content)
 
 	c.JSON(http.StatusOK, &user)
 }
