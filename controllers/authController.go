@@ -21,8 +21,12 @@ const SecretKey = "secret"
 
 func Register(c *gin.Context) {
 	var json map[string]string
+	var user models.User
+	var count int64
+
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	rand.Seed(time.Now().UnixNano())
@@ -36,31 +40,45 @@ func Register(c *gin.Context) {
 		panic(err)
 	}
 
-	user := models.User{
-		Email:       json["email"],
-		Password:    string(password),
-		Phone:       json["phone"],
-		UserAddress: json["userAddress"],
-		VerifyCode:  strconv.Itoa(randNum),
+	if database.Db.Model(&user).Where("email = ?", json["email"]).Count(&count); count == 1 {
+		if err := database.Db.Model(&user).Where("email = ?", json["email"]).Updates(map[string]interface{}{"password": string(password), "phone": json["phone"], "user_address": json["userAddress"], "verify_code": strconv.Itoa(randNum)}); err.Error != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error})
+			return
+		}
+	} else {
+
+		user := models.User{
+			Email:       json["email"],
+			Password:    string(password),
+			Phone:       json["phone"],
+			UserAddress: json["userAddress"],
+			VerifyCode:  strconv.Itoa(randNum),
+		}
+
+		if err := database.Db.Create(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "could not register"})
+			return
+		}
+
 	}
 
-	if err := database.Db.Create(&user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not register"})
-	}
-
-	c.JSON(http.StatusOK, json)
+	c.JSON(http.StatusOK, &user)
 }
 
 func VerifyEmail(c *gin.Context) {
 	var json map[string]string
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 	var user models.User
 
-	if err := database.Db.Model(&user).Where("email = ? AND verify_code = ?", json["email"], json["verify_code"]).Update("status", true); err.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error})
+	if err := database.Db.Model(&user).Where("email = ? AND verify_code = ?", json["email"], json["verifyCode"]).Update("status", true); err.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "could not verify"})
+		return
 	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "verification successful"})
 }
 
 func Login(c *gin.Context) {
@@ -68,15 +86,18 @@ func Login(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	var user models.User
-	if err := database.Db.Model(&user).Where("email = ? AND status = true", json["email"], json["password"]).First(&user); err.Error != nil {
+	if err := database.Db.Model(&user).Where("email = ? AND status = true", json["email"]).First(&user); err.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "user not found"})
+		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(json["password"])); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "incorrect password"})
+		return
 	}
 
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
@@ -88,6 +109,7 @@ func Login(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not login"})
+		return
 	}
 
 	c.SetCookie("jwt", token, int(time.Now().Add(time.Hour*24).Unix()), "/auth", "localhost", false, true)
@@ -96,7 +118,7 @@ func Login(c *gin.Context) {
 }
 
 func Profile(c *gin.Context) {
- 	cookie, _ := c.Cookie("jwt")
+	cookie, _ := c.Cookie("jwt")
 
 	token, err := jwt.ParseWithClaims(cookie, &jwt.StandardClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return []byte(SecretKey), nil
@@ -104,6 +126,7 @@ func Profile(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthenticated"})
+		return
 	}
 
 	claims := token.Claims.(*jwt.StandardClaims)

@@ -3,7 +3,11 @@ package database
 import (
 	"fmt"
 	"jwt-authen/models"
+	"log"
+	"os"
+
 	_ "github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -12,9 +16,12 @@ import (
 var Db *gorm.DB
 
 func Connect() {
+	err := godotenv.Load()
 
-	dsn := "host=localhost user=postgres password=20184189 port=5432 sslmode=disable"
-	con, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	con, err := gorm.Open(postgres.Open(fmt.Sprintf("host=%v user=%v password=%v port=%v sslmode=disable", os.Getenv("DB_HOST"), os.Getenv("DB_USER"), os.Getenv("DB_PASS"), os.Getenv("DB_PORT"))), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
