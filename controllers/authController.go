@@ -11,7 +11,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	_ "github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"f
+	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 
 	"math/rand"
