@@ -2,21 +2,43 @@ package routes
 
 import (
 	"jwt-authen/controllers"
+	"jwt-authen/middleware"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+
+	"jwt-authen/helpers"
+	"jwt-authen/services"
 )
 
 func Setup(r *gin.Engine) {
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
 
-	r.POST("/auth/register", controllers.Register)
-	r.POST("/auth/verifyEmail", controllers.VerifyEmail)
-	r.POST("/auth/login", controllers.Login)
-	r.GET("/auth/profile", controllers.Profile)
+	user := r.Group("/auth")
+	{
+		user.POST("/register", controllers.Register)
+		user.POST("verifyEmail", controllers.VerifyEmail)
+		user.POST("/login", controllers.Login)
+		user.GET("/profile", controllers.Profile)
+	}
+
+	item := r.Group("/")
+	{
+		item.POST("/item", middleware.Authentication(), controllers.CreateItem)
+	}
+
+	r.GET("/pagination", func(context *gin.Context) {
+		code := http.StatusOK
+
+		pagination := helpers.GeneratePaginationRequest(context)
+
+		response := services.Pagination(context, pagination)
+
+		if !response.Success {
+			code = http.StatusBadRequest
+		}
+
+		context.JSON(code, response)
+	})
 }

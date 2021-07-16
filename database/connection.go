@@ -27,5 +27,6 @@ func Connect() {
 	}
 	Db = con
 	con.AutoMigrate(&models.User{})
+	con.AutoMigrate(&models.Item{})
 	fmt.Println("Successfully connected!")
 }

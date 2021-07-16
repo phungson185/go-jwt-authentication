@@ -3,12 +3,15 @@ package models
 import "time"
 
 type User struct {
+	Id          uint32    `json:"id" gorm:"primary_key;auto_increment"`
 	Email       string    `json:"email" gorm:"unique"`
 	Password    string    `json:"password"`
-	Phone       string    `json:"phone"`
-	UserAddress string    `json:"userAddress"`
+	Phone       string    `json:"phone" gorm:"size:255;not null"`
+	UserAddress string    `json:"userAddress" gorm:"size:255;not null"`
 	Status      bool      `json:"status"`
 	VerifyCode  string    `json:"verifyCode"`
-	CreatedAt   time.Time `json:"createdAt" time_format:"2006-01-02" time_utc:"7"`
-	UpdatedAt   time.Time `json:"updatedAt" time_format:"2006-01-02" time_utc:"7"`
+	CreatedAt   time.Time `json:"createdAt" gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt   time.Time `json:"updatedAt" gorm:"default:CURRENT_TIMESTAMP"`
 }
+
+

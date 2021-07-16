@@ -43,7 +43,7 @@ func Register(c *gin.Context) {
 	}
 
 	if err := database.Db.Create(&user); err.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not registerc"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not register"})
 		return
 	}
 
@@ -100,7 +100,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("jwt", token, int(time.Now().Add(time.Hour*24).Unix()), "/auth", "localhost", false, true)
+	c.SetCookie("jwt", token, int(time.Now().Add(time.Hour*24).Unix()), "/", "localhost", false, true)
 
 	c.JSON(http.StatusOK, token)
 }
