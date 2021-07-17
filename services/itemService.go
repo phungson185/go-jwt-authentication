@@ -9,13 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Pagination(context *gin.Context, pagination *dtos.Pagination)  (*dtos.Pagination, error){
-	operationResult, totalPages := repositories.Pagination(pagination)
-	if operationResult.Error != nil {
-		return nil, operationResult.Error
+func Pagination(context *gin.Context, pagination *dtos.Pagination) (*dtos.Pagination, error) {
+	operationResult, totalPages, err := repositories.Pagination(pagination)
+	if err != nil {
+		return nil, err
 	}
 
-	var data = operationResult.Result.(*dtos.Pagination)
+	var data = operationResult
 
 	urlPath := context.Request.URL.Path
 

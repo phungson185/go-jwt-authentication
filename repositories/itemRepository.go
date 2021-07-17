@@ -36,7 +36,7 @@ func Delete(id uint32) error {
 	return nil
 }
 
-func Pagination(pagination *dtos.Pagination) (RepositoryResult, int) {
+func Pagination(pagination *dtos.Pagination) (*dtos.Pagination, int, error) {
 	var items []models.Item
 
 	totalPages, fromRow, toRow := 0, 0, 0
@@ -74,13 +74,13 @@ func Pagination(pagination *dtos.Pagination) (RepositoryResult, int) {
 	}
 
 	if err := find.Find(&items).Error; err != nil {
-		return RepositoryResult{Error: err}, totalPages
+		return nil, totalPages, err
 	}
 
 	pagination.Rows = items
 
-	if err := database.Db.Model(&models.Item{}).Count(&totalRows); err.Error != nil {
-		return RepositoryResult{Error: err.Error}, totalPages
+	if err := database.Db.Model(&models.Item{}).Count(&totalRows).Error; err != nil {
+		return nil, totalPages, err
 	}
 
 	pagination.TotalRows = totalRows
@@ -104,5 +104,5 @@ func Pagination(pagination *dtos.Pagination) (RepositoryResult, int) {
 	pagination.FromRow = fromRow
 	pagination.ToRow = toRow
 
-	return RepositoryResult{Result: pagination}, totalPages
+	return pagination, totalPages, nil
 }

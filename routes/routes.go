@@ -26,6 +26,6 @@ func Setup(r *gin.Engine) {
 		item.GET("/items/:id", middleware.Authentication(), controllers.GetItemById)
 		item.PUT("/items/:id", middleware.Authentication(), controllers.UpdateItemById)
 		item.DELETE("/items/:id", middleware.Authentication(), controllers.DeleteItemById)
+		item.POST("/items/:id/buy", middleware.Authentication(), controllers.BuyItem)
 	}
-
 }

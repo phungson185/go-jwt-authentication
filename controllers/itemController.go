@@ -151,3 +151,51 @@ func DeleteItemById(c *gin.Context) {
 
 	c.JSON(http.StatusOK, dtos.Response(true, "Success", nil))
 }
+
+func BuyItem(c *gin.Context) {
+	email, _ := c.Get("User")
+
+	id, err := strconv.ParseInt(c.Params.ByName("id"), 10, 64)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dtos.Response(false, "Invalid ID", nil))
+		return
+	}
+
+	res, err := repositories.FindById(uint32(id))
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, dtos.Response(false, "ID not found", nil))
+		return
+	}
+
+	if res.Owner == email {
+		c.JSON(http.StatusBadRequest, dtos.Response(false, "You are owner of item", nil))
+		return
+	}
+
+	hash := helpers.NewSHA1Hash()
+
+	transaction := models.Transaction{
+		ItemID: res.ID,
+		TxHash: hash,
+		Buyer:  fmt.Sprintf("%v", email),
+		Seller: res.Owner,
+		Price:  uint64(res.Price),
+		Fee:    float64(res.Price) * 0.1,
+	}
+
+	if err := database.Db.Create(&transaction); err.Error != nil {
+		c.JSON(http.StatusInternalServerError, dtos.Response(false, "Transaction Failed", nil))
+		return
+	}
+
+	res.Owner = fmt.Sprintf("%v", email)
+	res.Status = "Success"
+
+	if err := database.Db.Save(&res).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, dtos.Response(false, "Update Item Failed", nil))
+	}
+
+	c.JSON(http.StatusOK, dtos.Response(true, "Success", transaction))
+}
