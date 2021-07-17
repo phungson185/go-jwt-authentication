@@ -3,8 +3,13 @@ package controllers
 import (
 	"fmt"
 	"jwt-authen/database"
+	"jwt-authen/dtos"
+	"jwt-authen/helpers"
 	"jwt-authen/models"
+	"jwt-authen/repositories"
+	"jwt-authen/services"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/gin-gonic/gin"
@@ -25,10 +30,10 @@ type ItemModel struct{}
 
 func CreateItem(c *gin.Context) {
 	email, _ := c.Get("User")
-	if email == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthenticated"})
-		return
-	}
+	// if email == nil {
+	// 	c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthenticated"})
+	// 	return
+	// }
 	var json CreateItemInput
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -56,6 +61,33 @@ func CreateItem(c *gin.Context) {
 	c.JSON(http.StatusOK, item)
 }
 
+func GetAllItem(c *gin.Context) {
 
+	pagination := helpers.GeneratePaginationRequest(c)
 
+	response, err := services.Pagination(c, pagination)
 
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dtos.Response(false, err.Error(), nil))
+		return
+	}
+
+	c.JSON(http.StatusOK, dtos.Response(true, "Success", response))
+}
+
+func GetById(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Params.ByName("id"), 10, 64)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dtos.Response(false, "Invalid ID", nil))
+		return
+	}
+	res, err := repositories.FindById(uint32(id))
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, dtos.Response(false, "ID not found", nil))
+		return
+	}
+
+	c.JSON(http.StatusOK, dtos.Response(true, "Get Item success", res))
+}

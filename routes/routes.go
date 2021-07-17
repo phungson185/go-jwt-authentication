@@ -3,14 +3,10 @@ package routes
 import (
 	"jwt-authen/controllers"
 	"jwt-authen/middleware"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
-
-	"jwt-authen/helpers"
-	"jwt-authen/services"
 )
 
 func Setup(r *gin.Engine) {
@@ -25,20 +21,10 @@ func Setup(r *gin.Engine) {
 
 	item := r.Group("/")
 	{
-		item.POST("/item", middleware.Authentication(), controllers.CreateItem)
+		item.POST("/items", middleware.Authentication(), controllers.CreateItem)
+		item.GET("/items", middleware.Authentication(), controllers.GetAllItem)
+		item.GET("/items/:id", middleware.Authentication(), controllers.GetById)
 	}
 
-	r.GET("/pagination", func(context *gin.Context) {
-		code := http.StatusOK
 
-		pagination := helpers.GeneratePaginationRequest(context)
-
-		response := services.Pagination(context, pagination)
-
-		if !response.Success {
-			code = http.StatusBadRequest
-		}
-
-		context.JSON(code, response)
-	})
 }

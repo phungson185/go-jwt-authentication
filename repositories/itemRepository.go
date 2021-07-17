@@ -1,23 +1,63 @@
 package repositories
 
 import (
+	"fmt"
 	"math"
+	"strings"
 
 	"jwt-authen/database"
 	"jwt-authen/dtos"
 	"jwt-authen/models"
 )
 
+func FindById(id uint32) (*models.Item, error) {
+	var item models.Item
+
+	if err := database.Db.Where(&models.Item{ID: id}).Take(&item).Error; err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
 func Pagination(pagination *dtos.Pagination) (RepositoryResult, int) {
-	var items models.Item
+	var items []models.Item
 
 	totalPages, fromRow, toRow := 0, 0, 0
 
 	var totalRows int64 = 0
 
-	offset := pagination.Page * pagination.Limit
-	if err := database.Db.Model(&models.Item{}).Limit(pagination.Limit).Offset(offset).Order(pagination.Sort).Find(&items); err.Error != nil {
-		return RepositoryResult{Error: err.Error}, totalPages
+	offset := (pagination.Page - 1) * pagination.Limit
+
+	find := database.Db.Limit(pagination.Limit).Offset(offset).Order(pagination.Sort)
+
+	searchs := pagination.Searchs
+
+	if searchs != nil {
+		for _, value := range searchs {
+			column := value.Column
+			action := value.Action
+			query := value.Query
+
+			switch action {
+			case "equals":
+				whereQuery := fmt.Sprintf("%s = ?", column)
+				find = find.Where(whereQuery, query)
+				break
+			case "contains":
+				whereQuery := fmt.Sprintf("%s LIKE ?", column)
+				find = find.Where(whereQuery, "%"+query+"%")
+				break
+			case "in":
+				whereQuery := fmt.Sprintf("%s IN (?)", column)
+				queryArray := strings.Split(query, ",")
+				find = find.Where(whereQuery, queryArray)
+				break
+			}
+		}
+	}
+
+	if err := find.Find(&items).Error; err != nil {
+		return RepositoryResult{Error: err}, totalPages
 	}
 
 	pagination.Rows = items
@@ -28,22 +68,19 @@ func Pagination(pagination *dtos.Pagination) (RepositoryResult, int) {
 
 	pagination.TotalRows = totalRows
 
-	totalPages = int(math.Ceil(float64(totalRows)/float64(pagination.Limit))) - 1
+	totalPages = int(math.Ceil(float64(totalRows) / float64(pagination.Limit)))
 
-	if pagination.Page == 0 {
-		// set from & to row on first page
+	if pagination.Page == 1 {
 		fromRow = 1
 		toRow = pagination.Limit
 	} else {
 		if pagination.Page <= totalPages {
-			// calculate from & to row
 			fromRow = pagination.Page*pagination.Limit + 1
 			toRow = (pagination.Page + 1) * pagination.Limit
 		}
 	}
 
 	if int64(toRow) > totalRows {
-		// set to row with total rows
 		toRow = int(totalRows)
 	}
 

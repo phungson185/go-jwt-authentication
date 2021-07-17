@@ -21,7 +21,7 @@ func Authentication() gin.HandlerFunc {
 
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthenticated"})
-			return
+			c.Abort()
 		}
 
 		claims := token.Claims.(*jwt.StandardClaims)
@@ -30,7 +30,7 @@ func Authentication() gin.HandlerFunc {
 
 		if err := database.Db.Where("email = ?", claims.Issuer).First(&user); err.Error != nil {
 			c.JSON(http.StatusNotFound, gin.H{"message": "user not found"})
-			return
+			c.Abort()
 		}
 
 		c.Set("User", user.Email)
