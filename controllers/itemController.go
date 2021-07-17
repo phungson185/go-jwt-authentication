@@ -118,3 +118,36 @@ func UpdateItemById(c *gin.Context) {
 
 	c.JSON(http.StatusOK, dtos.Response(true, "Success", res))
 }
+
+func DeleteItemById(c *gin.Context) {
+
+	email, _ := c.Get("User")
+
+	id, err := strconv.ParseInt(c.Params.ByName("id"), 10, 64)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dtos.Response(false, "Invalid ID", nil))
+		return
+	}
+
+	res, err := repositories.FindById(uint32(id))
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, dtos.Response(false, "ID not found", nil))
+		return
+	}
+
+	if res.Owner != email {
+		c.JSON(http.StatusBadRequest, dtos.Response(false, "You aren't owner of item", nil))
+		return
+	}
+
+	err = repositories.Delete(uint32(id))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dtos.Response(false, "Delete Item Failed", nil))
+		return
+	}
+
+	c.JSON(http.StatusOK, dtos.Response(true, "Success", nil))
+}

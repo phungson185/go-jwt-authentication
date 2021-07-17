@@ -28,6 +28,14 @@ func Update(id uint32, input dtos.UpdateItem) (*models.Item, error) {
 	return &item, nil
 }
 
+func Delete(id uint32) error {
+	var item models.Item
+	if err := database.Db.Where(&models.Item{ID:id}).Delete(&item).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 func Pagination(pagination *dtos.Pagination) (RepositoryResult, int) {
 	var items []models.Item
 
