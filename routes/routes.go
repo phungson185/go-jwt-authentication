@@ -23,8 +23,8 @@ func Setup(r *gin.Engine) {
 	{
 		item.POST("/items", middleware.Authentication(), controllers.CreateItem)
 		item.GET("/items", middleware.Authentication(), controllers.GetAllItem)
-		item.GET("/items/:id", middleware.Authentication(), controllers.GetById)
+		item.GET("/items/:id", middleware.Authentication(), controllers.GetItemById)
+		item.PUT("/items/:id", middleware.Authentication(), controllers.UpdateItemById)
 	}
-
 
 }

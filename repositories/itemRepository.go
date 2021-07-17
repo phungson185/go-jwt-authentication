@@ -19,6 +19,15 @@ func FindById(id uint32) (*models.Item, error) {
 	return &item, nil
 }
 
+func Update(id uint32, input dtos.UpdateItem) (*models.Item, error) {
+	var item models.Item
+
+	if err := database.Db.Where(&models.Item{ID: id}).Updates(models.Item{Name: input.Name, Description: input.Description, Currency: input.Currency, Price: int64(input.Price)}).Find(&item).Error; err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
 func Pagination(pagination *dtos.Pagination) (RepositoryResult, int) {
 	var items []models.Item
 
