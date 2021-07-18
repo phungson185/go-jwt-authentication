@@ -53,7 +53,13 @@ func GetAllItem(c *gin.Context) {
 
 	pagination := helpers.GeneratePaginationRequest(c)
 
-	response, err := services.Pagination(c, pagination)
+	operationResult, totalPages, err := repositories.ItemPagination(pagination)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dtos.Response(false, err.Error(), nil))
+	}
+
+	response, err := services.Pagination(c, operationResult, totalPages)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dtos.Response(false, err.Error(), nil))
@@ -198,4 +204,38 @@ func BuyItem(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, dtos.Response(true, "Success", transaction))
+}
+
+func ItemTransaction(c *gin.Context) {
+
+	id, err := strconv.ParseInt(c.Params.ByName("id"), 10, 64)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dtos.Response(false, "Invalid ID", nil))
+		return
+	}
+
+	_, err = repositories.FindById(uint32(id))
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, dtos.Response(false, "ID not found", nil))
+		return
+	}
+
+	pagination := helpers.GeneratePaginationRequest(c)
+
+	operationResult, totalPages, err := repositories.TransactionPagination(pagination, uint32(id))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dtos.Response(false, err.Error(), nil))
+	}
+
+	response, err := services.Pagination(c, operationResult, totalPages)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dtos.Response(false, err.Error(), nil))
+		return
+	}
+
+	c.JSON(http.StatusOK, dtos.Response(true, "Success", response))
 }

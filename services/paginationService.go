@@ -4,18 +4,13 @@ import (
 	"fmt"
 
 	"jwt-authen/dtos"
-	"jwt-authen/repositories"
 
 	"github.com/gin-gonic/gin"
 )
 
-func Pagination(context *gin.Context, pagination *dtos.Pagination) (*dtos.Pagination, error) {
-	operationResult, totalPages, err := repositories.Pagination(pagination)
-	if err != nil {
-		return nil, err
-	}
+func Pagination(context *gin.Context, pagination *dtos.Pagination, totalPages int) (*dtos.Pagination, error) {
 
-	var data = operationResult
+	var data = pagination
 
 	urlPath := context.Request.URL.Path
 

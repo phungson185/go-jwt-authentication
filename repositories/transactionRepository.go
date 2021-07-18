@@ -10,34 +10,8 @@ import (
 	"jwt-authen/models"
 )
 
-func FindById(id uint32) (*models.Item, error) {
-	var item models.Item
-
-	if err := database.Db.Where(&models.Item{ID: id}).Take(&item).Error; err != nil {
-		return nil, err
-	}
-	return &item, nil
-}
-
-func Update(id uint32, input dtos.UpdateItem) (*models.Item, error) {
-	var item models.Item
-
-	if err := database.Db.Where(&models.Item{ID: id}).Updates(models.Item{Name: input.Name, Description: input.Description, Currency: input.Currency, Price: int64(input.Price)}).Find(&item).Error; err != nil {
-		return nil, err
-	}
-	return &item, nil
-}
-
-func Delete(id uint32) error {
-	var item models.Item
-	if err := database.Db.Where(&models.Item{ID: id}).Delete(&item).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func ItemPagination(pagination *dtos.Pagination) (*dtos.Pagination, int, error) {
-	var items []models.Item
+func TransactionPagination(pagination *dtos.Pagination, id uint32) (*dtos.Pagination, int, error) {
+	var transactions []models.Transaction
 
 	totalPages, fromRow, toRow := 0, 0, 0
 
@@ -73,13 +47,13 @@ func ItemPagination(pagination *dtos.Pagination) (*dtos.Pagination, int, error) 
 		}
 	}
 
-	if err := find.Find(&items).Error; err != nil {
+	if err := find.Find(&transactions).Error; err != nil {
 		return nil, totalPages, err
 	}
 
-	pagination.Rows = items
+	pagination.Rows = transactions
 
-	if err := database.Db.Model(&models.Item{}).Count(&totalRows).Error; err != nil {
+	if err := database.Db.Model(&models.Transaction{}).Count(&totalRows).Error; err != nil {
 		return nil, totalPages, err
 	}
 
