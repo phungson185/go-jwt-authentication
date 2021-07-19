@@ -14,19 +14,24 @@ func Setup(r *gin.Engine) {
 	user := r.Group("/auth")
 	{
 		user.POST("/register", controllers.Register)
-		user.POST("verifyEmail", controllers.VerifyEmail)
+		user.POST("/verifyEmail", controllers.VerifyEmail)
 		user.POST("/login", controllers.Login)
 		user.GET("/profile", controllers.Profile)
 	}
 
-	item := r.Group("/")
+	item := r.Group("/items")
 	{
-		item.POST("/items", middleware.Authentication(), controllers.CreateItem)
-		item.GET("/items", middleware.Authentication(), controllers.GetAllItem)
-		item.GET("/items/:id", middleware.Authentication(), controllers.GetItemById)
-		item.PUT("/items/:id", middleware.Authentication(), controllers.UpdateItemById)
-		item.DELETE("/items/:id", middleware.Authentication(), controllers.DeleteItemById)
-		item.POST("/items/:id/buy", middleware.Authentication(), controllers.BuyItem)
-		item.GET("/items/:id/transactions", middleware.Authentication(), controllers.ItemTransaction)
+		item.POST("", middleware.Authentication(), controllers.CreateItem)
+		item.GET("", middleware.Authentication(), controllers.GetAllItem)
+		item.GET("/:id", middleware.Authentication(), controllers.GetItemById)
+		item.PUT("/:id", middleware.Authentication(), controllers.UpdateItemById)
+		item.DELETE("/:id", middleware.Authentication(), controllers.DeleteItemById)
+		item.POST("/:id/buy", middleware.Authentication(), controllers.BuyItem)
+		item.GET("/:id/transactions", middleware.Authentication(), controllers.ItemTransaction)
+	}
+
+	auction := r.Group("/auction/items")
+	{
+		auction.POST("/:id", middleware.Authentication(), controllers.CreateAuction)
 	}
 }

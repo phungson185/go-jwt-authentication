@@ -83,7 +83,7 @@ func GetItemById(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, dtos.Response(true, "Get Item success", res))
+	c.JSON(http.StatusOK, dtos.Response(true, "Get Item Success", res))
 }
 
 func UpdateItemById(c *gin.Context) {

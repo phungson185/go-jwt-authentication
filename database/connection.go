@@ -26,8 +26,5 @@ func Connect() {
 		panic(err)
 	}
 	Db = con
-	con.AutoMigrate(&models.User{})
-	con.AutoMigrate(&models.Item{})
-	con.AutoMigrate(&models.Transaction{})
-	fmt.Println("Successfully connected!")
+	con.AutoMigrate(&models.User{}, &models.Item{}, &models.Transaction{}, &models.Auction{})
 }
