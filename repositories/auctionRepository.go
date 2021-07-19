@@ -2,45 +2,44 @@ package repositories
 
 import (
 	"fmt"
-	"math"
-	"strings"
-
 	"jwt-authen/database"
 	"jwt-authen/dtos"
 	"jwt-authen/models"
+	"math"
+	"strings"
+	"time"
 )
 
-type ItemRepo struct{}
+type AuctionRepo struct{}
 
+func (a *AuctionRepo) FindById(id uint32) (*models.Auction, error) {
+	var auction models.Auction
 
-func (i *ItemRepo) FindById(id uint32) (*models.Item, error) {
-	var item models.Item
-
-	if err := database.Db.Where(&models.Item{ID: id}).Take(&item).Error; err != nil {
+	if err := database.Db.Where(&models.Auction{ID: id}).Take(&auction).Error; err != nil {
 		return nil, err
 	}
-	return &item, nil
+	return &auction, nil
 }
 
-func (i *ItemRepo) Update(id uint32, input dtos.UpdateItem) (*models.Item, error) {
-	var item models.Item
+func (a *AuctionRepo) Update(id uint32, input dtos.UpdateAuction) (*models.Auction, error) {
+	var auction models.Auction
 
-	if err := database.Db.Where(&models.Item{ID: id}).Updates(models.Item{Name: input.Name, Description: input.Description, Currency: input.Currency, Price: int64(input.Price)}).Find(&item).Error; err != nil {
+	if err := database.Db.Where(&models.Auction{ID: id}).Updates(models.Auction{InitialPrice: input.InitialPrice, FinalPrice: input.FinalPrice, EndAt: time.Unix(input.EndAt, 7)}).Find(&auction).Error; err != nil {
 		return nil, err
 	}
-	return &item, nil
+	return &auction, nil
 }
 
-func (i *ItemRepo) Delete(id uint32) error {
-	var item models.Item
-	if err := database.Db.Where(&models.Item{ID: id}).Delete(&item).Error; err != nil {
+func (a *AuctionRepo) Delete(id uint32) error {
+	var auction models.Auction
+	if err := database.Db.Where(&models.Auction{ID: id}).Delete(&auction).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
-func (i *ItemRepo) Pagination(pagination *dtos.Pagination) (*dtos.Pagination, int, error) {
-	var items []models.Item
+func (a *AuctionRepo) Pagination(pagination *dtos.Pagination) (*dtos.Pagination, int, error) {
+	var auctions []models.Auction
 
 	totalPages, fromRow, toRow := 0, 0, 0
 
@@ -76,13 +75,13 @@ func (i *ItemRepo) Pagination(pagination *dtos.Pagination) (*dtos.Pagination, in
 		}
 	}
 
-	if err := find.Find(&items).Error; err != nil {
+	if err := find.Find(&auctions).Error; err != nil {
 		return nil, totalPages, err
 	}
 
-	pagination.Rows = items
+	pagination.Rows = auctions
 
-	if err := database.Db.Model(&models.Item{}).Count(&totalRows).Error; err != nil {
+	if err := database.Db.Model(&models.Auction{}).Count(&totalRows).Error; err != nil {
 		return nil, totalPages, err
 	}
 

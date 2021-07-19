@@ -16,6 +16,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var ItemRepo = new(repositories.ItemRepo)
+
 func CreateItem(c *gin.Context) {
 	email, _ := c.Get("User")
 	// if email == nil {
@@ -53,7 +55,7 @@ func GetAllItem(c *gin.Context) {
 
 	pagination := helpers.GeneratePaginationRequest(c)
 
-	operationResult, totalPages, err := repositories.ItemPagination(pagination)
+	operationResult, totalPages, err := ItemRepo.Pagination(pagination)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dtos.Response(false, err.Error(), nil))
@@ -76,7 +78,7 @@ func GetItemById(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, dtos.Response(false, "Invalid ID", nil))
 		return
 	}
-	res, err := repositories.FindById(uint32(id))
+	res, err := ItemRepo.FindById(uint32(id))
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, dtos.Response(false, "ID not found", nil))
@@ -97,7 +99,7 @@ func UpdateItemById(c *gin.Context) {
 		return
 	}
 
-	res, err := repositories.FindById(uint32(id))
+	res, err := ItemRepo.FindById(uint32(id))
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, dtos.Response(false, "ID not found", nil))
@@ -115,7 +117,7 @@ func UpdateItemById(c *gin.Context) {
 		return
 	}
 
-	res, err = repositories.Update(uint32(id), input)
+	res, err = ItemRepo.Update(uint32(id), input)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dtos.Response(false, "Update Item Failed", nil))
@@ -136,7 +138,7 @@ func DeleteItemById(c *gin.Context) {
 		return
 	}
 
-	res, err := repositories.FindById(uint32(id))
+	res, err := ItemRepo.FindById(uint32(id))
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, dtos.Response(false, "ID not found", nil))
@@ -148,7 +150,7 @@ func DeleteItemById(c *gin.Context) {
 		return
 	}
 
-	err = repositories.Delete(uint32(id))
+	err = ItemRepo.Delete(uint32(id))
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dtos.Response(false, "Delete Item Failed", nil))
@@ -168,7 +170,7 @@ func BuyItem(c *gin.Context) {
 		return
 	}
 
-	res, err := repositories.FindById(uint32(id))
+	res, err := ItemRepo.FindById(uint32(id))
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, dtos.Response(false, "ID not found", nil))
@@ -215,7 +217,7 @@ func ItemTransaction(c *gin.Context) {
 		return
 	}
 
-	_, err = repositories.FindById(uint32(id))
+	_, err = ItemRepo.FindById(uint32(id))
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, dtos.Response(false, "ID not found", nil))

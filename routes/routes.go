@@ -30,8 +30,12 @@ func Setup(r *gin.Engine) {
 		item.GET("/:id/transactions", middleware.Authentication(), controllers.ItemTransaction)
 	}
 
-	auction := r.Group("/auction/items")
+	auction := r.Group("/auctions")
 	{
-		auction.POST("/:id", middleware.Authentication(), controllers.CreateAuction)
+		auction.POST("/items/:id", middleware.Authentication(), controllers.CreateAuction)
+		auction.GET("", middleware.Authentication(), controllers.GetAllAuction)
+		auction.GET("/:id", middleware.Authentication(), controllers.GetAuctionById)
+		auction.PUT("/:id", middleware.Authentication(), controllers.UpdateAuctionById)
+		auction.DELETE("/:id", middleware.Authentication(), controllers.DeleteAuctionById)
 	}
 }
