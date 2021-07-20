@@ -39,3 +39,14 @@ func (s *StatisticRepo) ListNewestAuction() (interface{}, error) {
 
 	return auctions, nil
 }
+
+func (s *StatisticRepo) SellestItem() (interface{}, error) {
+
+	var item models.Item
+
+	if err := database.Db.Raw("select * from items where id in (select item_id from transactions group by item_id order by count(item_id) desc limit 1)").Scan(&item).Error; err != nil {
+		return nil, err
+	}
+
+	return item, nil
+}

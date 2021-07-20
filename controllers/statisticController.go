@@ -47,3 +47,15 @@ func NewestAuction(c *gin.Context) {
 
 	c.JSON(http.StatusOK, dtos.Response(true, "Success", res))
 }
+
+func BestSellingItem(c *gin.Context) {
+
+	res, err := StatisticRepo.SellestItem()
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dtos.Response(false, err.Error(), nil))
+		return
+	}
+
+	c.JSON(http.StatusOK, dtos.Response(true, "Success", res))
+}

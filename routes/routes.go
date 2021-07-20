@@ -46,5 +46,6 @@ func Setup(r *gin.Engine) {
 		statistic.GET("/users", middleware.Authentication(), controllers.TotalUser)
 		statistic.GET("/newestitem", middleware.Authentication(), controllers.NewestItem)
 		statistic.GET("/newestauction", middleware.Authentication(), controllers.NewestAuction)
+		statistic.GET("/sellestitem", middleware.Authentication(), controllers.BestSellingItem)
 	}
 }
