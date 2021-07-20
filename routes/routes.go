@@ -39,8 +39,12 @@ func Setup(r *gin.Engine) {
 		auction.DELETE("/:id", middleware.Authentication(), controllers.DeleteAuctionById)
 	}
 
-	revenue := r.Group("/revenue")
+	r.GET("revenue", middleware.Authentication(), controllers.Revenue)
+
+	statistic := r.Group("/statistic")
 	{
-		revenue.GET("", middleware.Authentication(), controllers.Revenue)
+		statistic.GET("/users", middleware.Authentication(), controllers.TotalUser)
+		statistic.GET("/newestitem", middleware.Authentication(), controllers.NewestItem)
+		statistic.GET("/newestauction", middleware.Authentication(), controllers.NewestAuction)
 	}
 }
