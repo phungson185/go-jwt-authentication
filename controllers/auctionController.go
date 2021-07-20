@@ -101,7 +101,7 @@ func UpdateAuctionById(c *gin.Context) {
 		return
 	}
 
-	res, err := AuctionRepo.FindById(uint32(id))
+	_, err = AuctionRepo.FindById(uint32(id))
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, dtos.Response(false, "ID not found", nil))
@@ -114,7 +114,7 @@ func UpdateAuctionById(c *gin.Context) {
 		return
 	}
 
-	res, err = AuctionRepo.Update(uint32(id), input)
+	res, err := AuctionRepo.Update(uint32(id), input)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dtos.Response(false, "Update Auction Failed", nil))
@@ -149,3 +149,4 @@ func DeleteAuctionById(c *gin.Context) {
 
 	c.JSON(http.StatusOK, dtos.Response(true, "Success", nil))
 }
+	

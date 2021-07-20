@@ -38,4 +38,9 @@ func Setup(r *gin.Engine) {
 		auction.PUT("/:id", middleware.Authentication(), controllers.UpdateAuctionById)
 		auction.DELETE("/:id", middleware.Authentication(), controllers.DeleteAuctionById)
 	}
+
+	revenue := r.Group("/revenue")
+	{
+		revenue.GET("", middleware.Authentication(), controllers.Revenue)
+	}
 }
