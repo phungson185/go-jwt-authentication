@@ -50,3 +50,14 @@ func (s *StatisticRepo) SellestItem() (interface{}, error) {
 
 	return item, nil
 }
+
+func (s *StatisticRepo) FavoriteAuction() (interface{}, error) {
+
+	var auction models.Auction
+
+	if err := database.Db.Raw("select * from auctions where id in (select auction_id from bids group by auction_id order by count(auction_id) desc limit 1)").Scan(&auction).Error; err != nil {
+		return nil, err
+	}
+
+	return auction, nil
+}

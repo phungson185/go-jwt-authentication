@@ -20,10 +20,7 @@ var ItemRepo = new(repositories.ItemRepo)
 
 func CreateItem(c *gin.Context) {
 	email, _ := c.Get("User")
-	// if email == nil {
-	// 	c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthenticated"})
-	// 	return
-	// }
+
 	var json dtos.CreateItem
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -43,12 +40,10 @@ func CreateItem(c *gin.Context) {
 		return
 	}
 
-	if err := database.Db.Model(&models.Item{}).Where("id = ?", item.ID).Update("metadata", fmt.Sprintf("localhost:8080/item/%d", item.ID)); err.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not update metadata"})
-		return
-	}
+	item.Metadata = fmt.Sprintf("localhost:8080/item/%d", item.ID)
+	database.Db.Save(&item)
 
-	c.JSON(http.StatusOK, item)
+	c.JSON(http.StatusOK, dtos.Response(true, "Success", item))
 }
 
 func GetAllItem(c *gin.Context) {
@@ -177,6 +172,11 @@ func BuyItem(c *gin.Context) {
 		return
 	}
 
+	if res.Type == "Auction" {
+		c.JSON(http.StatusBadRequest, dtos.Response(false, "Could not buy", nil))
+		return
+	}
+
 	if res.Owner == email {
 		c.JSON(http.StatusBadRequest, dtos.Response(false, "You are owner of item", nil))
 		return
@@ -194,15 +194,16 @@ func BuyItem(c *gin.Context) {
 	}
 
 	if err := database.Db.Create(&transaction); err.Error != nil {
-		c.JSON(http.StatusInternalServerError, dtos.Response(false, "Transaction Failed", nil))
+		c.JSON(http.StatusInternalServerError, dtos.Response(false, "Transaction failed", nil))
 		return
 	}
 
 	res.Owner = fmt.Sprintf("%v", email)
 	res.Status = "Success"
+	res.Type = "Fixed"
 
 	if err := database.Db.Save(&res).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, dtos.Response(false, "Update Item Failed", nil))
+		c.JSON(http.StatusInternalServerError, dtos.Response(false, "Update item failed", nil))
 	}
 
 	c.JSON(http.StatusOK, dtos.Response(true, "Success", transaction))

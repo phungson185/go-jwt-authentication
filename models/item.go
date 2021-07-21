@@ -12,6 +12,7 @@ type Item struct {
 	Creator     string    `json:"creator" gorm:"size:255;not null" `
 	Metadata    string    `json:"metadata" gorm:"size:255;not null" `
 	Status      string    `json:"status" gorm:"size:255;not null;default:Pending" `
+	Type        string    `gorm:"size:255;not null" json:"type" binding:"required"`
 	CreatedAt   time.Time `json:"created_at" gorm:"default:CURRENT_TIMESTAMP" `
 	UpdatedAt   time.Time `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP" `
 }

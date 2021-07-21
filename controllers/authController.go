@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"fmt"
 	"jwt-authen/database"
+	"jwt-authen/dtos"
 	"jwt-authen/models"
 	"jwt-authen/services"
 	"net/http"
@@ -20,7 +22,9 @@ import (
 const SecretKey = "secret"
 
 func Register(c *gin.Context) {
-	var json map[string]string
+
+	var json dtos.CreateUser
+
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
@@ -28,17 +32,17 @@ func Register(c *gin.Context) {
 	rand.Seed(time.Now().UnixNano())
 	randNum := rand.Intn(999999) + 100000
 
-	password, err := bcrypt.GenerateFromPassword([]byte(json["password"]), bcrypt.DefaultCost)
+	password, err := bcrypt.GenerateFromPassword([]byte(json.Password), bcrypt.DefaultCost)
 
 	if err != nil {
 		panic(err)
 	}
 
 	user := models.User{
-		Email:       json["email"],
+		Email:       json.Email,
 		Password:    string(password),
-		Phone:       json["phone"],
-		UserAddress: json["userAddress"],
+		Phone:       json.Phone,
+		UserAddress: json.UserAddress,
 		VerifyCode:  strconv.Itoa(randNum),
 	}
 
@@ -48,29 +52,30 @@ func Register(c *gin.Context) {
 	}
 
 	content := "Your authentication code is: " + strconv.Itoa(randNum)
-	services.SendMail(json["email"], "Verify Email", content)
+	services.SendMail(json.Email, "Verify Email", content)
 
-	c.JSON(http.StatusOK, &user)
+	c.JSON(http.StatusOK, dtos.Response(true, "Success", &user))
+
 }
 
 func VerifyEmail(c *gin.Context) {
-	var json map[string]string
+	var json dtos.VerifyEmail
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	var user models.User
 
-	if err := database.Db.Model(&user).Where("email = ? AND verify_code = ?", json["email"], json["verifyCode"]).Update("status", true); err.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": "could not verify"})
+	if err := database.Db.Model(&user).Where("email = ? AND verify_code = ?", json.Email, json.VerifyCode).Update("status", true); err.Error != nil {
+		c.JSON(http.StatusNotFound, dtos.Response(false, "Could not verify", nil))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "verification successful"})
+	c.JSON(http.StatusOK, dtos.Response(true, "Success", nil))
 }
 
 func Login(c *gin.Context) {
-	var json map[string]string
+	var json dtos.Login
 
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -78,13 +83,13 @@ func Login(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := database.Db.Model(&user).Where("email = ? AND status = true", json["email"]).First(&user); err.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": "user not found"})
+	if err := database.Db.Model(&user).Where("email = ? AND status = true", json.Email).First(&user); err.Error != nil {
+		c.JSON(http.StatusNotFound, dtos.Response(false, "User not found", nil))
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(json["password"])); err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": "incorrect password"})
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(json.Password)); err != nil {
+		c.JSON(http.StatusNotFound, dtos.Response(false, "Incorrect password", nil))
 		return
 	}
 
@@ -96,32 +101,20 @@ func Login(c *gin.Context) {
 	token, err := claims.SignedString([]byte(SecretKey))
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not login"})
+		c.JSON(http.StatusInternalServerError, dtos.Response(false, "Could not login", nil))
 		return
 	}
 
 	c.SetCookie("jwt", token, int(time.Now().Add(time.Hour*24).Unix()), "/", "localhost", false, true)
 
-	c.JSON(http.StatusOK, token)
+	c.JSON(http.StatusOK, dtos.Response(true, "Success", token))
 }
 
 func Profile(c *gin.Context) {
-	cookie, _ := c.Cookie("jwt")
-
-	token, err := jwt.ParseWithClaims(cookie, &jwt.StandardClaims{}, func(t *jwt.Token) (interface{}, error) {
-		return []byte(SecretKey), nil
-	})
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthenticated"})
-		return
-	}
-
-	claims := token.Claims.(*jwt.StandardClaims)
-
+	email, _ := c.Get("User")
 	var user models.User
 
-	database.Db.Where("email = ?", claims.Issuer).First(&user)
+	database.Db.Where("email = ?", fmt.Sprintf("%v", email)).First(&user)
 
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, dtos.Response(true, "Success", user))
 }

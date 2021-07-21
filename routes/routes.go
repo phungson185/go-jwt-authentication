@@ -16,7 +16,7 @@ func Setup(r *gin.Engine) {
 		user.POST("/register", controllers.Register)
 		user.POST("/verifyEmail", controllers.VerifyEmail)
 		user.POST("/login", controllers.Login)
-		user.GET("/profile", controllers.Profile)
+		user.GET("/profile", middleware.Authentication(), controllers.Profile)
 	}
 
 	item := r.Group("/items")
@@ -37,9 +37,10 @@ func Setup(r *gin.Engine) {
 		auction.GET("/:id", middleware.Authentication(), controllers.GetAuctionById)
 		auction.PUT("/:id", middleware.Authentication(), controllers.UpdateAuctionById)
 		auction.DELETE("/:id", middleware.Authentication(), controllers.DeleteAuctionById)
+		auction.POST("/:id/bid", middleware.Authentication(), controllers.Bid)
 	}
 
-	r.GET("revenue", middleware.Authentication(), controllers.Revenue)
+	r.GET("/revenue", middleware.Authentication(), controllers.Revenue)
 
 	statistic := r.Group("/statistic")
 	{
@@ -47,5 +48,6 @@ func Setup(r *gin.Engine) {
 		statistic.GET("/newestitem", middleware.Authentication(), controllers.NewestItem)
 		statistic.GET("/newestauction", middleware.Authentication(), controllers.NewestAuction)
 		statistic.GET("/sellestitem", middleware.Authentication(), controllers.BestSellingItem)
+		statistic.GET("/hottestauction", middleware.Authentication(), controllers.HottestAuction)
 	}
 }

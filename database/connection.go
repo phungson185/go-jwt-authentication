@@ -26,5 +26,5 @@ func Connect() {
 		panic(err)
 	}
 	Db = con
-	con.AutoMigrate(&models.User{}, &models.Item{}, &models.Transaction{}, &models.Auction{})
+	con.AutoMigrate(&models.User{}, &models.Item{}, &models.Transaction{}, &models.Auction{}, &models.Bid{})
 }
